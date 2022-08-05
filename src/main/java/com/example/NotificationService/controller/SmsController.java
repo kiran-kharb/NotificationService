@@ -6,6 +6,7 @@ import com.example.NotificationService.Request.SmsRequest;
 import com.example.NotificationService.Response.PostReqResponse;
 import com.example.NotificationService.service.SmsService;
 import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 @Data
 public class SmsController {
 
+    @Autowired
     private final SmsService smsservice;
 
 

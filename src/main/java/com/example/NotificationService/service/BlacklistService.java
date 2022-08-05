@@ -40,7 +40,18 @@ public class BlacklistService {
             return false;
         }
 
+    }
+//    public boolean checkblacklisted(String pno)
+//    {
+//
+//    }
 
-        //return "true";
+    public boolean whitelist(String phonenumber)
+    {
+        BlacklistEntity blacklistEntity=new BlacklistEntity();
+        blacklistEntity.setPhone_number(phonenumber);
+        blacklistEntity.setIfBlacklisted(true);
+        blacklistRepository.DeleteById(blacklistEntity.getPhone_number());
+        return true;
     }
 }

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 // can be in any format)
 public class SmsRequest {
     @JsonProperty("pno")
-  //  @Pattern(regexp="^[+]?[0-9]{0,2}?[0-9]{10}$",message="Invalid Phone Number!")
+  //@Pattern(regexp="^[+]?[0-9]{0,2}?[0-9]{10}$",message="Invalid Phone Number!")
     private String pno;
 
     @JsonProperty("msg")

@@ -23,7 +23,7 @@ public class RedisConfig {
 
         return new JedisConnectionFactory(config);
     }
-    @Bean
+    @Bean(name="redisTemplate")
     //accessing redis server from our application
     public RedisTemplate<String,Object> redisTemplate(){
         RedisTemplate<String,Object> template=new RedisTemplate<>();

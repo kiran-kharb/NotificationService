@@ -34,4 +34,12 @@ public class BlacklistController {
 
        return "unsuccessfull";
     }
+    @DeleteMapping("/{phonenumber}")
+    public String WhitelistNumbers(@PathVariable("phonenumber") String phonenumber)
+    {
+        boolean b=blacklistService.whitelist(phonenumber);
+        if(b)
+            return "successfully whitelisted";
+        return "error";
+    }
 }

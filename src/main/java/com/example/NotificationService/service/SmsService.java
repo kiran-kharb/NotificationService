@@ -6,6 +6,7 @@ import com.example.NotificationService.Exceptions.SmsException;
 import com.example.NotificationService.Repository.SmsRepository;
 import com.example.NotificationService.Request.SmsRequest;
 import com.example.NotificationService.Response.PostReqResponse;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -14,14 +15,14 @@ import java.util.Optional;
 import java.util.regex.*;
 
 @Service
+@Data
 public class SmsService {
 
+    @Autowired
     private final SmsRepository smsrepository;
 
     @Autowired
-    public SmsService(SmsRepository smsrepository) {
-        this.smsrepository = smsrepository;
-    }
+    private KafkaProducer kafkaProducer;
 
     public List<SmsEntity> getMsgs()
     {
@@ -49,7 +50,10 @@ public class SmsService {
         String msg = smsrequest.getMsg();
         //checkvalidity(pno , msg);
         SmsEntity smsentity= SmsAdapter.createEntity(smsrequest);
+
         smsrepository.save(smsentity);
+        kafkaProducer.sendMessage(String.valueOf(smsentity.getId()));
+        System.out.println("successfully published");
         return SmsAdapter.createResponse(smsentity);
 
     }
