@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,7 +24,8 @@ import java.util.Optional;
 @Data
 public class KafkaConsumer {
 
-   private  RestTemplate restTemplate;
+    private  RestTemplate restTemplate;
+
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumer.class);
     @Autowired
     private final SmsRepository smsrepository;
@@ -53,8 +55,6 @@ public class KafkaConsumer {
             System.out.println(thirdPartyResponse);
 
         }
-
-
 
     }
     public ThirdPartyEntity getThirdPartyDetails(SmsEntity smsEntity)
@@ -91,13 +91,14 @@ public class KafkaConsumer {
     }
     public ThirdPartyResponse callThirdPartyApi(ThirdPartyEntity thirdPartyEntity)
     {
+        restTemplate=new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("key","93ceffda-5941-11ea-9da9-025282c394f2");
 
-        HttpEntity<Object> requestEntity = new HttpEntity<>(thirdPartyEntity, headers);
+        HttpEntity<List<ThirdPartyEntity>> requestEntity = new HttpEntity<>(Collections.singletonList(thirdPartyEntity), headers);
 
         ResponseEntity<ThirdPartyResponse> responseEntity = restTemplate.exchange("https://api.imiconnect.in/resources/v1/messaging",
                 HttpMethod.POST,
