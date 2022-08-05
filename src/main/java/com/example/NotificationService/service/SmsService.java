@@ -52,7 +52,7 @@ public class SmsService {
         SmsEntity smsentity= SmsAdapter.createEntity(smsrequest);
 
         smsrepository.save(smsentity);
-        kafkaProducer.sendMessage(String.valueOf(smsentity.getId()));
+        kafkaProducer.sendMessage(smsentity.getId());
         System.out.println("successfully published");
         return SmsAdapter.createResponse(smsentity);
 

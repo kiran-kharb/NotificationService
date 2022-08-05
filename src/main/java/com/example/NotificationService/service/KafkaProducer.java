@@ -17,9 +17,9 @@ public class KafkaProducer {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducer.class);
     @Autowired
-    KafkaTemplate<String, String> kafkaTemplate;
+    KafkaTemplate<Object, Integer> kafkaTemplate;
 
-    public void sendMessage(String reqID){
+    public void sendMessage(int reqID){
 
         LOGGER.info(String.format("Message sent -> %s", reqID));
 
@@ -27,6 +27,9 @@ public class KafkaProducer {
 //                .withPayload(reqID)
 //                .setHeader(KafkaHeaders.TOPIC, topicName)
 //                .build();
-           kafkaTemplate.send(topicName, reqID);
+        //kafkaTemplate.se
+        //kafkaTemplate.send(topicName,reqID);
+
+        kafkaTemplate.send(topicName,reqID);
     }
 }
