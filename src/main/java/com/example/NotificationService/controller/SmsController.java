@@ -56,9 +56,9 @@ public class SmsController {
     public ResponseEntity<GenericResponse> GetDetails(@PathVariable("request_id") String requestId)
     {
         GenericResponse<SmsEntity,ErrorResponse> genericResponse=new GenericResponse<>();
-
         try{
            genericResponse= smsservice.getsms(requestId);
+            System.out.println("successfully fetched all the details");
            return new ResponseEntity<>(genericResponse,HttpStatus.OK);
         }
         catch(SmsException e)
