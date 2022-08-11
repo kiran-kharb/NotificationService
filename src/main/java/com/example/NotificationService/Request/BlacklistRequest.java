@@ -1,5 +1,6 @@
 package com.example.NotificationService.Request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 public class BlacklistRequest {
 
-    //@JsonProperty("phone_numbers")
+    @JsonProperty("phone_numbers")
     private List<String>  phone_numbers;
 
 }

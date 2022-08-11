@@ -24,20 +24,13 @@ public class BlacklistService {
 
     }
 
-    public boolean BlacklistNumbers(BlacklistRequest blacklistRequest) //list of
+    public void BlacklistNumbers(BlacklistRequest blacklistRequest) //list of
     {
-        try{
-            List<String> phone_numbers=blacklistRequest.getPhone_numbers();
-            for(String number : phone_numbers)
-            {
-                BlacklistEntity b=new BlacklistEntity(number,true);
-                blacklistRepository.save(b);
-            }
-            return true;
-        }
-        catch(Exception e)
+        List<String> phone_numbers=blacklistRequest.getPhone_numbers();
+        for(String number : phone_numbers)
         {
-            return false;
+            BlacklistEntity b=new BlacklistEntity(number,true);
+            blacklistRepository.save(b);
         }
 
     }
@@ -46,12 +39,12 @@ public class BlacklistService {
 //
 //    }
 
-    public boolean whitelist(String phonenumber)
+    public void whitelist(String phonenumber)
     {
         BlacklistEntity blacklistEntity=new BlacklistEntity();
         blacklistEntity.setPhone_number(phonenumber);
         blacklistEntity.setIfBlacklisted(true);
         blacklistRepository.DeleteById(blacklistEntity.getPhone_number());
-        return true;
+
     }
 }

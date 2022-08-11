@@ -1,9 +1,12 @@
 package com.example.NotificationService.service;
 
 
+import com.example.NotificationService.Adapter.SmsAdapter;
 import com.example.NotificationService.Entities.*;
 import com.example.NotificationService.Repository.BlacklistRepository;
+import com.example.NotificationService.Repository.SearchRepository;
 import com.example.NotificationService.Repository.SmsRepository;
+import com.example.NotificationService.Response.ListThirdPartyResponse;
 import com.example.NotificationService.Response.ThirdPartyResponse;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +18,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -23,21 +27,21 @@ import java.util.Optional;
 @Slf4j
 @Data
 public class KafkaConsumer {
-
-    private  RestTemplate restTemplate;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumer.class);
     @Autowired
     private final SmsRepository smsrepository;
     @Autowired
     private final BlacklistRepository blacklistRepository;
 
+    @Autowired
+    private final SearchRepository searchRepository;
+
     @KafkaListener(topics = "${spring.kafka.topic.name}", groupId = "${spring.kafka.consumer.group-id}")
     public void consume(int reqID) {
         //LOGGER.info(String.format("Json message recieved-> %s"), reqID);
         //get details from database
         SmsEntity smsEntity = getDetails(reqID);
-        String phoneNumber = smsEntity.getPno();
+        String phoneNumber = smsEntity.getPhoneNumber();
         Optional<BlacklistEntity> blacklistEntity = Optional.ofNullable(blacklistRepository.findByID(phoneNumber));
         if (blacklistEntity.isPresent())
         {
@@ -46,13 +50,33 @@ public class KafkaConsumer {
         }
         else
         {
-            System.out.println("HEllo");
+
             ThirdPartyEntity thirdPartyEntity= getThirdPartyDetails(smsEntity);
             LOGGER.info(String.format("third party entity created"));
             System.out.println(thirdPartyEntity);
-           ThirdPartyResponse thirdPartyResponse= callThirdPartyApi(thirdPartyEntity);
+
+            ListThirdPartyResponse thirdPartyResponseList= callThirdPartyApi(thirdPartyEntity);
+            List<ThirdPartyResponse> thirdPartyResponses= thirdPartyResponseList.getThirdPartyResponseList();
+            ThirdPartyResponse thirdPartyResponse=thirdPartyResponses.get(0);
             LOGGER.info(String.format("Message consumed"));
-            System.out.println(thirdPartyResponse);
+            System.out.println(thirdPartyResponseList);
+            if(thirdPartyResponse.getCode().equals("1001") )
+            {
+                smsEntity.setStatus("Processed Successfully");
+                smsEntity.setUpdatedAt(LocalDateTime.now());
+                smsrepository.save(smsEntity);
+            }
+            else
+            {
+                smsEntity.setStatus("Message Sending Failed");
+                smsEntity.setUpdatedAt(LocalDateTime.now());
+                smsrepository.save(smsEntity);
+            }
+            //indexing the details
+            SearchEntity searchEntity= SmsAdapter.createSearchEntity(smsEntity);
+            System.out.println(searchEntity);
+            searchRepository.save(searchEntity);
+            LOGGER.info("indexing successfull");
 
         }
 
@@ -63,35 +87,21 @@ public class KafkaConsumer {
 
         Channels channels=new Channels();
         Sms sms=new Sms();
-        sms.setText(smsEntity.getMsg());
+        sms.setText(smsEntity.getMessage());
         channels.setSms(sms);
 
         Destination destination=new Destination();
-        destination.setCorrelationId(String.valueOf(smsEntity.getId()));
-        destination.setMsisdn(Collections.singletonList(smsEntity.getPno()));
+        destination.setCorrelationId(String.valueOf(smsEntity.getRequestId() ));
+        destination.setMsisdn(Collections.singletonList(smsEntity.getPhoneNumber()));
 
         thirdPartyEntity.setChannels(channels);
         thirdPartyEntity.setDestination(Collections.singletonList(destination));
         return thirdPartyEntity;
-//        ThirdPartyEntity.Channels channels=new ThirdPartyEntity.Channels();
-//
-//        ThirdPartyEntity.Channels.Sms sms=new ThirdPartyEntity.Channels.Sms();
-//        sms.setText(smsEntity.getMsg());
-//        channels.setSms(sms);
-//        ThirdPartyEntity.Destination destination=new ThirdPartyEntity.Destination();
-//        destination.setMsisdn(Collections.singletonList(smsEntity.getPno()));
-//        destination.setCorrelationId(String.valueOf(smsEntity.getId()));
-//
-//        ThirdPartyEntity thirdPartyEntity=new ThirdPartyEntity();
-//        thirdPartyEntity.setDeliverychannel("sms");
-//        thirdPartyEntity.setChannels(channels);
-//        thirdPartyEntity.setDestination(Collections.singletonList(destination));
-//
-//        return thirdPartyEntity;
+
     }
-    public ThirdPartyResponse callThirdPartyApi(ThirdPartyEntity thirdPartyEntity)
+    public ListThirdPartyResponse callThirdPartyApi(ThirdPartyEntity thirdPartyEntity)
     {
-        restTemplate=new RestTemplate();
+        RestTemplate restTemplate=new RestTemplate();
 
         HttpHeaders headers = new HttpHeaders();
 
@@ -100,23 +110,12 @@ public class KafkaConsumer {
 
         HttpEntity<List<ThirdPartyEntity>> requestEntity = new HttpEntity<>(Collections.singletonList(thirdPartyEntity), headers);
 
-        ResponseEntity<ThirdPartyResponse> responseEntity = restTemplate.exchange("https://api.imiconnect.in/resources/v1/messaging",
+        ResponseEntity<ListThirdPartyResponse> responseEntity = restTemplate.exchange("https://api.imiconnect.in/resources/v1/messaging",
                 HttpMethod.POST,
                 requestEntity,
-                ThirdPartyResponse.class);
+                ListThirdPartyResponse.class);
 
         return responseEntity.getBody();
-//        HttpHeaders headers=new HttpHeaders();
-//        //headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
-//        headers.setContentType(MediaType.APPLICATION_JSON);
-//        headers.add("key", "93ceffda-5941-11ea-9da9-025282c394f2");
-//        HttpEntity<ThirdPartyEntity> entity = new HttpEntity<ThirdPartyEntity>(thirdPartyEntity,headers);
-//        LOGGER.info(String.format("error 1"));
-//        String url="https://api.imiconnect.in/resources/v1/messaging";
-//        ResponseEntity<ThirdPartyResponse> result=restTemplate.exchange(
-//                url, HttpMethod.POST,entity,ThirdPartyResponse.class);
-//        LOGGER.info(String.format(" error 2"));
-//        return result.getBody();
     }
     public SmsEntity getDetails(int reqId)
     {

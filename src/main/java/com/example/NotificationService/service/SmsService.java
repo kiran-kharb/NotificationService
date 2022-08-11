@@ -5,14 +5,15 @@ import com.example.NotificationService.Entities.SmsEntity;
 import com.example.NotificationService.Exceptions.SmsException;
 import com.example.NotificationService.Repository.SmsRepository;
 import com.example.NotificationService.Request.SmsRequest;
-import com.example.NotificationService.Response.PostReqResponse;
+import com.example.NotificationService.Response.GenericResponse;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Data
@@ -24,36 +25,42 @@ public class SmsService {
     @Autowired
     private KafkaProducer kafkaProducer;
 
+
     public List<SmsEntity> getMsgs()
     {
         return smsrepository.findAll();
-//       return new SmsEntity(123 , "Hello World");
     }
-    public PostReqResponse getsms(String request_id)
+    public GenericResponse getsms(String requestId)
     {
-        boolean b=smsrepository.existsById(Integer.valueOf(request_id));
+        boolean b=smsrepository.existsSmsEntityByRequestId(requestId);
+
         if(!b)
         {
             throw new SmsException("User not found");
         }
-        Optional<SmsEntity> smsEntity =smsrepository.findById(Integer.valueOf(request_id));
-//        if (smsEntity.isPresent()){
-              SmsEntity smsEntity1 = smsEntity.get();
-       // }
-        return SmsAdapter.createResponse(smsEntity1);
+       Optional<SmsEntity> smsEntity =smsrepository.findByRequestId(requestId);
+
+        if (!smsEntity.isPresent())
+        {
+            throw new SmsException("Request Not Found");
+
+        }
+        SmsEntity smsEntity1 = smsEntity.get();
+        return SmsAdapter.createResponseForGetId(smsEntity1);
 
     }
-    public PostReqResponse savesms(SmsRequest smsrequest)
+    public GenericResponse savesms(SmsRequest smsrequest)
     {
 
         String pno = smsrequest.getPno();
         String msg = smsrequest.getMsg();
         //checkvalidity(pno , msg);
         SmsEntity smsentity= SmsAdapter.createEntity(smsrequest);
-
         smsrepository.save(smsentity);
-        kafkaProducer.sendMessage(smsentity.getId());
+
+        kafkaProducer.sendMessage(smsentity. getId());
         System.out.println("successfully published");
+
         return SmsAdapter.createResponse(smsentity);
 
     }

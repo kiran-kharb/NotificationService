@@ -1,12 +1,17 @@
 package com.example.NotificationService.Entities;
+
 import com.example.NotificationService.Request.SmsRequest;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
+
 //column name :
 @Entity
 @Table
@@ -25,34 +30,58 @@ public class SmsEntity {
              strategy = GenerationType.SEQUENCE,
              generator = "sms_sequence"
      )
+     @Column(name="id")
      private int id;
-     private String pno ;//condition for checking validity
-     private String msg;
+
+     @GeneratedValue(generator = "UUID")
+     @GenericGenerator(
+             name = "UUID",
+             strategy = "org.hibernate.id.UUIDGenerator"
+     )
+     @Column(name = "request_id", unique=true,updatable = false, nullable = false)
+     private String requestId;
+
+     @PrePersist
+     public void autofill() {
+          this.requestId= UUID.randomUUID().toString();
+     }
+
+     @Column(name="phone_number")
+     private String phoneNumber;//condition for checking validity
+     @Column(name="message")
+     private String message;
+     @Column(name="status")
      private String status; //save : In_progress , after kafka consumer : processing ,
-     private long failure_code; //after sending to 3rd party
-     private String failure_comment;
-     private LocalDateTime created_at; //
-     private LocalDateTime updated_at;
+     @Column(name="failure_code")
+     private long failureCode; //after sending to 3rd party
+     @Column(name="failure_comments")
+     private String failureComment;
+     @Column(name="created_at")
+     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+     private LocalDateTime createdAt; //
+     @Column(name="updated_at")
+     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+     private LocalDateTime updatedAt;
 
 
      public SmsEntity(SmsRequest sms)
      {
-          this.pno=sms.getPno();
-          this.msg=sms.getMsg();
+          this.phoneNumber =sms.getPno();
+          this.message =sms.getMsg();
 
      }
-     public SmsEntity (String pno , String msg)
+     public SmsEntity (String phoneNumber, String message)
      {
-          this.pno=pno;
-          this.msg=msg;
+          this.phoneNumber = phoneNumber;
+          this.message = message;
      }
 
      @Override
      public String toString() {
           return "SmsEntity{" +
                   "id=" + id +
-                  ", pno=" + pno +
-                  ", msg='" + msg + '\'' +
+                  ", pno=" + phoneNumber +
+                  ", msg='" + message + '\'' +
                   '}';
      }
 }

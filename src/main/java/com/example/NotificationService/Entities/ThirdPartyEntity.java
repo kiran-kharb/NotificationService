@@ -12,24 +12,5 @@ public class ThirdPartyEntity
     private Channels channels;
     private List<Destination> destination;
 
-   // @Data
-//    public static class Channels
-//    {
-//        private Sms sms;
-//
-//       @Data
-//        public static class Sms
-//        {
-//            String text;
-//        }
-//    }
-//
-//    @Data
-//    public static class Destination{
-//        List<String> msisdn;
-//        String correlationId;
-//
-//    }
-
 
 }
